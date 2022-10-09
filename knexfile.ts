@@ -6,6 +6,7 @@ import type { Knex } from 'knex';
 
 const config: Knex.Config = {
   client: process.env.DB_CLIENT,
+  version: process.env.DB_VERSION,
   connection: {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
