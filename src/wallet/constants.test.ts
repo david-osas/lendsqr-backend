@@ -20,7 +20,7 @@ export const dummyTransaction: Transaction = {
   amount: 10000,
   senderId: 'dummy sender id',
   receiverId: 'dummy receiver id',
-  transactionType: TransactionType.INFLOW,
+  transactionType: TransactionType.FUND,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

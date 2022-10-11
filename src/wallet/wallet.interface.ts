@@ -1,5 +1,5 @@
 export enum TransactionType {
-  INFLOW = 'INFLOW',
+  FUND = 'FUND',
   TRANSFER = 'TRANSFER',
-  OUTFLOW = 'OUTFLOW',
+  WITHDRAW = 'WITHDRAW',
 }

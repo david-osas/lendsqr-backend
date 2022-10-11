@@ -65,7 +65,7 @@ export class WalletService {
       amount,
       senderId: paymentProviderId,
       receiverId: walletId,
-      transactionType: TransactionType.INFLOW,
+      transactionType: TransactionType.FUND,
     });
 
     return await this.transactionRepository.save(transaction);
@@ -90,7 +90,7 @@ export class WalletService {
       amount,
       senderId: walletId,
       receiverId: paymentProviderId,
-      transactionType: TransactionType.OUTFLOW,
+      transactionType: TransactionType.WITHDRAW,
     });
 
     return await this.transactionRepository.save(transaction);

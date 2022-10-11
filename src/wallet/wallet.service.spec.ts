@@ -166,7 +166,7 @@ describe('Wallet Service', () => {
     try {
       await walletService.walletTransfer({
         ...dummyWalletTransferDTO,
-        recieverWalletId: wrongWalletId,
+        receiverWalletId: wrongWalletId,
       });
     } catch (error) {
       expect(error).toBeInstanceOf(NotFoundError);
