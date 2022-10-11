@@ -44,7 +44,9 @@ export class WalletService {
     }
 
     const transaction = this.transactionRepository.create({
-      ...transferDTO,
+      senderId: senderWalletId,
+      receiverId: receiverWalletId,
+      amount,
       transactionType: TransactionType.TRANSFER,
     });
 
