@@ -1,3 +1,4 @@
+import { WalletFundFlowDTO } from './dto/wallet-fund-flow.dto';
 import { FindWalletDTO } from './dto/find-wallet.dto';
 import { ForbiddenError, NotFoundError } from './../utils/errors';
 import { WalletTransferDTO } from './dto/wallet-transfer.dto';
@@ -44,8 +45,50 @@ export class WalletService {
 
     const transaction = this.transactionRepository.create({
       ...transferDTO,
-      completedAt: new Date(),
       transactionType: TransactionType.TRANSFER,
+    });
+
+    return await this.transactionRepository.save(transaction);
+  }
+
+  async fundWallet(fundFlowDTO: WalletFundFlowDTO) {
+    const { walletId, amount, paymentProviderId } = fundFlowDTO;
+
+    const wallet = await this.findOneWallet({ id: walletId });
+    if (!wallet) {
+      throw new NotFoundError('no wallet found');
+    }
+
+    const transaction = this.transactionRepository.create({
+      amount,
+      senderId: paymentProviderId,
+      receiverId: walletId,
+      transactionType: TransactionType.INFLOW,
+    });
+
+    return await this.transactionRepository.save(transaction);
+  }
+
+  async withdrawFromWallet(withdrawFundFlowDTO: WalletFundFlowDTO) {
+    const { walletId, amount, paymentProviderId } = withdrawFundFlowDTO;
+
+    const wallet = await this.findOneWallet({ id: walletId });
+    if (!wallet) {
+      throw new NotFoundError('no wallet found');
+    }
+
+    const walletBalance = await this.getBalance(walletId);
+    if (walletBalance < amount) {
+      throw new ForbiddenError(
+        "user's balance is insufficient for this operation",
+      );
+    }
+
+    const transaction = this.transactionRepository.create({
+      amount,
+      senderId: walletId,
+      receiverId: paymentProviderId,
+      transactionType: TransactionType.OUTFLOW,
     });
 
     return await this.transactionRepository.save(transaction);

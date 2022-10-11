@@ -1,3 +1,4 @@
+import { WalletFundFlowDTO } from './dto/wallet-fund-flow.dto';
 import { WalletTransferDTO } from './dto/wallet-transfer.dto';
 import { Transaction } from './entities/transaction.entity';
 import { Wallet } from './entities/wallet.entity';
@@ -17,7 +18,6 @@ export const dummyTransaction: Transaction = {
   amount: 10000,
   senderId: 'dummy sender id',
   receiverId: 'dummy receiver id',
-  completedAt: new Date(),
   transactionType: TransactionType.INFLOW,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -27,4 +27,10 @@ export const dummyWalletTransferDTO: WalletTransferDTO = {
   senderWalletId: dummyTransaction.senderId,
   recieverWalletId: dummyTransaction.receiverId,
   amount: 1000,
+};
+
+export const dummyWalletFundFlowDTO: WalletFundFlowDTO = {
+  amount: 1000,
+  paymentProviderId: 'dummy payment provider id',
+  walletId: dummyWallet.id,
 };

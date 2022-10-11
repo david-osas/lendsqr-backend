@@ -27,9 +27,6 @@ export class Transaction {
   @Column({ name: 'receiver_id' })
   receiverId: string;
 
-  @Column({ name: 'completed_at', type: Date, nullable: true })
-  completedAt: Date | null;
-
   @Column({ name: 'transaction_type', type: 'enum', enum: TransactionType })
   transactionType: TransactionType;
 

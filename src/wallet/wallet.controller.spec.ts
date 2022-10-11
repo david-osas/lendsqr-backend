@@ -4,6 +4,7 @@ import { WalletService } from './wallet.service';
 import {
   dummyTransaction,
   dummyWallet,
+  dummyWalletFundFlowDTO,
   dummyWalletTransferDTO,
 } from './constants.test';
 import { WalletController } from './wallet.controller';
@@ -22,6 +23,12 @@ describe('Wallet Controller', () => {
   const walletTransferMock = jest
     .fn()
     .mockImplementation(async () => dummyTransaction);
+  const withdrawFromWalletMock = jest
+    .fn()
+    .mockImplementation(async () => dummyTransaction);
+  const fundWalletMock = jest
+    .fn()
+    .mockImplementation(async () => dummyTransaction);
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
@@ -32,6 +39,8 @@ describe('Wallet Controller', () => {
           useValue: {
             createWallet: createWalletMock,
             walletTransfer: walletTransferMock,
+            withdrawFromWallet: withdrawFromWalletMock,
+            fundWallet: fundWalletMock,
           },
         },
       ],
@@ -87,5 +96,65 @@ describe('Wallet Controller', () => {
     }
 
     expect(walletTransferMock).toBeCalledTimes(1);
+  });
+
+  it('should process wallet withdrawal', async () => {
+    const transaction = await walletController.withdrawFromWallet(
+      dummyWalletFundFlowDTO,
+    );
+
+    expect(withdrawFromWalletMock).toBeCalledTimes(1);
+    expect(transaction).toEqual(dummyTransaction);
+  });
+
+  it('should throw forbidden exception on forbidden actions during wallet withdrawal', async () => {
+    withdrawFromWalletMock.mockImplementationOnce(async () => {
+      throw new ForbiddenError();
+    });
+
+    try {
+      await walletController.withdrawFromWallet(dummyWalletFundFlowDTO);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ForbiddenException);
+    }
+
+    expect(withdrawFromWalletMock).toBeCalledTimes(1);
+  });
+
+  it('should throw not found exception when wallet resources are not found during wallet withdrawal', async () => {
+    withdrawFromWalletMock.mockImplementationOnce(async () => {
+      throw new NotFoundError();
+    });
+
+    try {
+      await walletController.withdrawFromWallet(dummyWalletFundFlowDTO);
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+    }
+
+    expect(withdrawFromWalletMock).toBeCalledTimes(1);
+  });
+
+  it('should process wallet funding', async () => {
+    const transaction = await walletController.fundWallet(
+      dummyWalletFundFlowDTO,
+    );
+
+    expect(fundWalletMock).toBeCalledTimes(1);
+    expect(transaction).toEqual(dummyTransaction);
+  });
+
+  it('should throw not found exception when wallet resources are not found during wallet funding', async () => {
+    fundWalletMock.mockImplementationOnce(async () => {
+      throw new NotFoundError();
+    });
+
+    try {
+      await walletController.fundWallet(dummyWalletFundFlowDTO);
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+    }
+
+    expect(fundWalletMock).toBeCalledTimes(1);
   });
 });

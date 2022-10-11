@@ -6,6 +6,7 @@ import {
   wrongWalletId,
   dummyTransaction,
   dummyWalletTransferDTO,
+  dummyWalletFundFlowDTO,
 } from './constants.test';
 import { WalletService } from './wallet.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -185,6 +186,83 @@ describe('Wallet Service', () => {
 
     try {
       await walletService.walletTransfer(dummyWalletTransferDTO);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ForbiddenError);
+    }
+
+    expect(createTransactionMock).toBeCalledTimes(0);
+    expect(saveTransactionMock).toBeCalledTimes(0);
+  });
+
+  it('should process funding of a wallet', async () => {
+    jest
+      .spyOn(walletService, 'findOneWallet')
+      .mockImplementation(async () => dummyWallet);
+
+    const transaction = await walletService.fundWallet(dummyWalletFundFlowDTO);
+
+    expect(createTransactionMock).toBeCalledTimes(1);
+    expect(saveTransactionMock).toBeCalledTimes(1);
+    expect(transaction).toEqual(dummyTransaction);
+  });
+
+  it('should not fund wallet if it is not found', async () => {
+    jest
+      .spyOn(walletService, 'findOneWallet')
+      .mockImplementation(async () => undefined);
+
+    try {
+      await walletService.fundWallet(dummyWalletFundFlowDTO);
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundError);
+    }
+
+    expect(createTransactionMock).toBeCalledTimes(0);
+    expect(saveTransactionMock).toBeCalledTimes(0);
+  });
+
+  it('should process wallet withdrawal', async () => {
+    jest
+      .spyOn(walletService, 'findOneWallet')
+      .mockImplementation(async () => dummyWallet);
+    jest
+      .spyOn(walletService, 'getBalance')
+      .mockImplementation(async () => dummyWalletFundFlowDTO.amount + 100);
+
+    const transaction = await walletService.withdrawFromWallet(
+      dummyWalletFundFlowDTO,
+    );
+
+    expect(createTransactionMock).toBeCalledTimes(1);
+    expect(saveTransactionMock).toBeCalledTimes(1);
+    expect(transaction).toEqual(dummyTransaction);
+  });
+
+  it('should not allow withdrawal if wallet is not found', async () => {
+    jest
+      .spyOn(walletService, 'findOneWallet')
+      .mockImplementation(async () => undefined);
+
+    try {
+      await walletService.withdrawFromWallet(dummyWalletFundFlowDTO);
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundError);
+    }
+
+    expect(createTransactionMock).toBeCalledTimes(0);
+    expect(saveTransactionMock).toBeCalledTimes(0);
+  });
+
+  it('should not allow withdrawal if wallet balance is insufficient', async () => {
+    jest
+      .spyOn(walletService, 'findOneWallet')
+      .mockImplementation(async () => dummyWallet);
+    jest
+      .spyOn(walletService, 'getBalance')
+      .mockImplementation(async () => dummyWalletFundFlowDTO.amount - 100);
+
+    try {
+      await walletService.withdrawFromWallet(dummyWalletFundFlowDTO);
     } catch (error) {
       expect(error).toBeInstanceOf(ForbiddenError);
     }
