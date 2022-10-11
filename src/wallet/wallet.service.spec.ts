@@ -11,6 +11,7 @@ import {
 import { WalletService } from './wallet.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Wallet } from './entities/wallet.entity';
+import { TransactionType } from './wallet.interface';
 
 describe('Wallet Service', () => {
   let walletService: WalletService;
@@ -41,6 +42,7 @@ describe('Wallet Service', () => {
   const saveTransactionMock = jest
     .fn()
     .mockImplementation(async () => dummyTransaction);
+  const emitMock = jest.fn();
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
@@ -62,6 +64,12 @@ describe('Wallet Service', () => {
             save: saveTransactionMock,
           },
         },
+        {
+          provide: 'OUTFLOW_SERVICE',
+          useValue: {
+            emit: emitMock,
+          },
+        },
       ],
     }).compile();
 
@@ -79,6 +87,42 @@ describe('Wallet Service', () => {
     expect(createWalletMock).toBeCalledTimes(1);
     expect(saveWalletMock).toBeCalledTimes(1);
     expect(wallet).toEqual({ ...dummyWallet, userId });
+  });
+
+  it('should send outflow request to messaging queue for processing', async () => {
+    const outflowRequest: any = {};
+    walletService.sendRequestToOutflowQueue(
+      outflowRequest,
+      TransactionType.TRANSFER,
+    );
+
+    expect(emitMock).toBeCalledTimes(1);
+  });
+
+  it('should initiate wallet withdrawal if outflow request is a withdrawal', async () => {
+    const withdrawSpy = jest
+      .spyOn(walletService, 'withdrawFromWallet')
+      .mockImplementation(async () => ({} as any));
+    const outflowRequest = {
+      transactionType: TransactionType.WITHDRAW,
+      outflowDTO: {},
+    };
+    await walletService.processOutFlowRequests(outflowRequest);
+
+    expect(withdrawSpy).toBeCalledTimes(1);
+  });
+
+  it('should initiate wallet transfer if outflow request is a transfer', async () => {
+    const transferSpy = jest
+      .spyOn(walletService, 'walletTransfer')
+      .mockImplementation(async () => ({} as any));
+    const outflowRequest = {
+      transactionType: TransactionType.TRANSFER,
+      outflowDTO: {},
+    };
+    await walletService.processOutFlowRequests(outflowRequest);
+
+    expect(transferSpy).toBeCalledTimes(1);
   });
 
   it('should find one wallet with a valid wallet id', async () => {

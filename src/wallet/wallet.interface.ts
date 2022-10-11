@@ -3,3 +3,8 @@ export enum TransactionType {
   TRANSFER = 'TRANSFER',
   WITHDRAW = 'WITHDRAW',
 }
+
+export interface OutFlowRequest {
+  outflowDTO: any;
+  transactionType: TransactionType;
+}

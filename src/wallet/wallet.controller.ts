@@ -1,18 +1,13 @@
 import { GetBalanceDto } from './dto/get-balance.dto';
 import { WalletFundFlowDTO } from './dto/wallet-fund-flow.dto';
-import { ForbiddenError, NotFoundError } from './../utils/errors';
+import { NotFoundError } from './../utils/errors';
 import { Transaction } from './entities/transaction.entity';
 import { WalletTransferDTO } from './dto/wallet-transfer.dto';
 import { WalletService } from './wallet.service';
 import { CreateWalletDTO } from './dto/create-wallet.dto';
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, NotFoundException } from '@nestjs/common';
+import { OutFlowRequest, TransactionType } from './wallet.interface';
+import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
 
 @Controller('wallet')
 export class WalletController {
@@ -30,21 +25,15 @@ export class WalletController {
 
   @Post('transfer')
   async walletTransfer(@Body() walletTransferDTO: WalletTransferDTO) {
-    let transaction: Transaction;
+    this.walletService.sendRequestToOutflowQueue(
+      walletTransferDTO,
+      TransactionType.TRANSFER,
+    );
 
-    try {
-      transaction = await this.walletService.walletTransfer(walletTransferDTO);
-    } catch (error) {
-      if (error instanceof ForbiddenError) {
-        throw new ForbiddenException(error.message);
-      } else if (error instanceof NotFoundError) {
-        throw new NotFoundException(error.message);
-      } else {
-        throw error;
-      }
-    }
-
-    return transaction;
+    return {
+      message:
+        'Transfer request has been successfully received. Check your balance later to view the update.',
+    };
   }
 
   @Post('fund')
@@ -66,22 +55,26 @@ export class WalletController {
 
   @Post('withdraw')
   async withdrawFromWallet(@Body() withdrawFundFlowDTO: WalletFundFlowDTO) {
-    let transaction: Transaction;
+    this.walletService.sendRequestToOutflowQueue(
+      withdrawFundFlowDTO,
+      TransactionType.WITHDRAW,
+    );
 
-    try {
-      transaction = await this.walletService.withdrawFromWallet(
-        withdrawFundFlowDTO,
-      );
-    } catch (error) {
-      if (error instanceof ForbiddenError) {
-        throw new ForbiddenException(error.message);
-      } else if (error instanceof NotFoundError) {
-        throw new NotFoundException(error.message);
-      } else {
-        throw error;
-      }
-    }
+    return {
+      message:
+        'Withdrawal request has been successfully received. Check your balance later to view the update.',
+    };
+  }
 
-    return transaction;
+  @EventPattern('add-outflow')
+  async processOutFlowRequests(
+    @Payload() request: OutFlowRequest,
+    @Ctx() context: RmqContext,
+  ) {
+    await this.walletService.processOutFlowRequests(request);
+
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+    channel.ack(originalMsg);
   }
 }

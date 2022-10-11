@@ -1,5 +1,5 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { ForbiddenError, NotFoundError } from './../utils/errors';
+import { NotFoundException } from '@nestjs/common';
+import { NotFoundError } from './../utils/errors';
 import { WalletService } from './wallet.service';
 import {
   dummyBalance,
@@ -21,12 +21,8 @@ describe('Wallet Controller', () => {
       userId,
     }));
 
-  const walletTransferMock = jest
-    .fn()
-    .mockImplementation(async () => dummyTransaction);
-  const withdrawFromWalletMock = jest
-    .fn()
-    .mockImplementation(async () => dummyTransaction);
+  const sendRequestToOutflowQueueMock = jest.fn();
+  const processOutFlowRequestsMock = jest.fn();
   const fundWalletMock = jest
     .fn()
     .mockImplementation(async () => dummyTransaction);
@@ -40,8 +36,8 @@ describe('Wallet Controller', () => {
           provide: WalletService,
           useValue: {
             createWallet: createWalletMock,
-            walletTransfer: walletTransferMock,
-            withdrawFromWallet: withdrawFromWalletMock,
+            sendRequestToOutflowQueue: sendRequestToOutflowQueueMock,
+            processOutFlowRequests: processOutFlowRequestsMock,
             fundWallet: fundWalletMock,
             getBalance: getBalanceMock,
           },
@@ -74,77 +70,21 @@ describe('Wallet Controller', () => {
   });
 
   it('should process wallet transfer', async () => {
-    const transaction = await walletController.walletTransfer(
+    const response = await walletController.walletTransfer(
       dummyWalletTransferDTO,
     );
 
-    expect(walletTransferMock).toBeCalledTimes(1);
-    expect(transaction).toEqual(dummyTransaction);
-  });
-
-  it('should throw forbidden exception on forbidden actions during wallet transfer', async () => {
-    walletTransferMock.mockImplementationOnce(async () => {
-      throw new ForbiddenError();
-    });
-
-    try {
-      await walletController.walletTransfer(dummyWalletTransferDTO);
-    } catch (error) {
-      expect(error).toBeInstanceOf(ForbiddenException);
-    }
-
-    expect(walletTransferMock).toBeCalledTimes(1);
-  });
-
-  it('should throw not found exception when wallet resources are not found during wallet transfer', async () => {
-    walletTransferMock.mockImplementationOnce(async () => {
-      throw new NotFoundError();
-    });
-
-    try {
-      await walletController.walletTransfer(dummyWalletTransferDTO);
-    } catch (error) {
-      expect(error).toBeInstanceOf(NotFoundException);
-    }
-
-    expect(walletTransferMock).toBeCalledTimes(1);
+    expect(sendRequestToOutflowQueueMock).toBeCalledTimes(1);
+    expect(response.message.length).toBeGreaterThan(0);
   });
 
   it('should process wallet withdrawal', async () => {
-    const transaction = await walletController.withdrawFromWallet(
+    const response = await walletController.withdrawFromWallet(
       dummyWalletFundFlowDTO,
     );
 
-    expect(withdrawFromWalletMock).toBeCalledTimes(1);
-    expect(transaction).toEqual(dummyTransaction);
-  });
-
-  it('should throw forbidden exception on forbidden actions during wallet withdrawal', async () => {
-    withdrawFromWalletMock.mockImplementationOnce(async () => {
-      throw new ForbiddenError();
-    });
-
-    try {
-      await walletController.withdrawFromWallet(dummyWalletFundFlowDTO);
-    } catch (error) {
-      expect(error).toBeInstanceOf(ForbiddenException);
-    }
-
-    expect(withdrawFromWalletMock).toBeCalledTimes(1);
-  });
-
-  it('should throw not found exception when wallet resources are not found during wallet withdrawal', async () => {
-    withdrawFromWalletMock.mockImplementationOnce(async () => {
-      throw new NotFoundError();
-    });
-
-    try {
-      await walletController.withdrawFromWallet(dummyWalletFundFlowDTO);
-    } catch (error) {
-      expect(error).toBeInstanceOf(NotFoundException);
-    }
-
-    expect(withdrawFromWalletMock).toBeCalledTimes(1);
+    expect(sendRequestToOutflowQueueMock).toBeCalledTimes(1);
+    expect(response.message.length).toBeGreaterThan(0);
   });
 
   it('should process wallet funding', async () => {
@@ -168,5 +108,18 @@ describe('Wallet Controller', () => {
     }
 
     expect(fundWalletMock).toBeCalledTimes(1);
+  });
+
+  it('should process outflow requests', async () => {
+    const outflowRequest: any = {};
+    const ackMock = jest.fn();
+    const dummyContext: any = {
+      getMessage: () => ({}),
+      getChannelRef: () => ({ ack: ackMock }),
+    };
+    await walletController.processOutFlowRequests(outflowRequest, dummyContext);
+
+    expect(processOutFlowRequestsMock).toBeCalledTimes(1);
+    expect(ackMock).toBeCalledTimes(1);
   });
 });

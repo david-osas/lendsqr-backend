@@ -3,12 +3,13 @@ import { FindWalletDTO } from './dto/find-wallet.dto';
 import { ForbiddenError, NotFoundError } from './../utils/errors';
 import { WalletTransferDTO } from './dto/wallet-transfer.dto';
 import { CreateWalletDTO } from './dto/create-wallet.dto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Wallet } from './entities/wallet.entity';
 import { Transaction } from './entities/transaction.entity';
-import { TransactionType } from './wallet.interface';
+import { TransactionType, OutFlowRequest } from './wallet.interface';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class WalletService {
@@ -17,11 +18,34 @@ export class WalletService {
     private readonly walletRepository: Repository<Wallet>,
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
+    @Inject('OUTFLOW_SERVICE') private readonly outflowClient: ClientProxy,
   ) {}
 
   async createWallet(createDTO: CreateWalletDTO) {
     const wallet = this.walletRepository.create(createDTO);
     return await this.walletRepository.save(wallet);
+  }
+
+  sendRequestToOutflowQueue(
+    outflowDTO: WalletTransferDTO | WalletFundFlowDTO,
+    transactionType: TransactionType,
+  ) {
+    this.outflowClient.emit('add-outflow', { outflowDTO, transactionType });
+  }
+
+  async processOutFlowRequests(request: OutFlowRequest) {
+    try {
+      if (request.transactionType === TransactionType.WITHDRAW) {
+        await this.withdrawFromWallet(request.outflowDTO);
+      } else if (request.transactionType === TransactionType.TRANSFER) {
+        await this.walletTransfer(request.outflowDTO);
+      }
+
+      // notify user of successful transaction
+    } catch (error) {
+      console.log(error);
+      // notify user of error
+    }
   }
 
   async walletTransfer(transferDTO: WalletTransferDTO) {
