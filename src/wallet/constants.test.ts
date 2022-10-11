@@ -6,6 +6,8 @@ import { TransactionType } from './wallet.interface';
 
 export const wrongWalletId = 'wrong wallet id';
 
+export const dummyBalance = 2000;
+
 export const dummyWallet: Wallet = {
   id: 'dummy wallet id',
   userId: 'dummy user id',

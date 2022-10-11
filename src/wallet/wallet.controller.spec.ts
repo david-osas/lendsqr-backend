@@ -2,6 +2,7 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ForbiddenError, NotFoundError } from './../utils/errors';
 import { WalletService } from './wallet.service';
 import {
+  dummyBalance,
   dummyTransaction,
   dummyWallet,
   dummyWalletFundFlowDTO,
@@ -29,6 +30,7 @@ describe('Wallet Controller', () => {
   const fundWalletMock = jest
     .fn()
     .mockImplementation(async () => dummyTransaction);
+  const getBalanceMock = jest.fn().mockImplementation(async () => dummyBalance);
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
@@ -41,6 +43,7 @@ describe('Wallet Controller', () => {
             walletTransfer: walletTransferMock,
             withdrawFromWallet: withdrawFromWalletMock,
             fundWallet: fundWalletMock,
+            getBalance: getBalanceMock,
           },
         },
       ],
@@ -59,6 +62,15 @@ describe('Wallet Controller', () => {
 
     expect(createWalletMock).toBeCalledTimes(1);
     expect(wallet).toEqual({ ...dummyWallet, userId });
+  });
+
+  it('should get wallet balance', async () => {
+    const balance = await walletController.getBalance({
+      walletId: 'dummy wallet id',
+    });
+
+    expect(getBalanceMock).toBeCalledTimes(1);
+    expect(balance).toEqual(dummyBalance);
   });
 
   it('should process wallet transfer', async () => {

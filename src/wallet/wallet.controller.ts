@@ -1,3 +1,4 @@
+import { GetBalanceDto } from './dto/get-balance.dto';
 import { WalletFundFlowDTO } from './dto/wallet-fund-flow.dto';
 import { ForbiddenError, NotFoundError } from './../utils/errors';
 import { Transaction } from './entities/transaction.entity';
@@ -7,6 +8,7 @@ import { CreateWalletDTO } from './dto/create-wallet.dto';
 import {
   Controller,
   Post,
+  Get,
   Body,
   ForbiddenException,
   NotFoundException,
@@ -19,6 +21,11 @@ export class WalletController {
   @Post()
   async createWallet(@Body() createDTO: CreateWalletDTO) {
     return await this.walletService.createWallet(createDTO);
+  }
+
+  @Get('balance')
+  async getBalance(@Body() getBalanceDTO: GetBalanceDto) {
+    return await this.walletService.getBalance(getBalanceDTO.walletId);
   }
 
   @Post('transfer')
