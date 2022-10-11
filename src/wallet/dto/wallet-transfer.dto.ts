@@ -7,7 +7,7 @@ export class WalletTransferDTO {
 
   @IsNotEmpty()
   @IsString()
-  recieverWalletId: string;
+  receiverWalletId: string;
 
   @IsPositive()
   amount: number;

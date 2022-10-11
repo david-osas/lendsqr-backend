@@ -27,7 +27,7 @@ export const dummyTransaction: Transaction = {
 
 export const dummyWalletTransferDTO: WalletTransferDTO = {
   senderWalletId: dummyTransaction.senderId,
-  recieverWalletId: dummyTransaction.receiverId,
+  receiverWalletId: dummyTransaction.receiverId,
   amount: 1000,
 };
 

@@ -25,13 +25,13 @@ export class WalletService {
   }
 
   async walletTransfer(transferDTO: WalletTransferDTO) {
-    const { senderWalletId, recieverWalletId, amount } = transferDTO;
+    const { senderWalletId, receiverWalletId, amount } = transferDTO;
 
     const senderWallet = await this.findOneWallet({ id: senderWalletId });
     if (!senderWallet) {
       throw new NotFoundError('no sender wallet found');
     }
-    const receiverWallet = await this.findOneWallet({ id: recieverWalletId });
+    const receiverWallet = await this.findOneWallet({ id: receiverWalletId });
     if (!receiverWallet) {
       throw new NotFoundError('no receiver wallet found');
     }
