@@ -1,22 +1,24 @@
 import { Module } from '@nestjs/common';
-import { KnexModule } from 'nest-knexjs';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { WalletModule } from './wallet/wallet.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { getConnectionOptions } from 'typeorm';
 
 @Module({
   imports: [
-    KnexModule.forRoot({
-      config: {
-        client: process.env.DB_CLIENT,
-        version: process.env.DB_VERSION,
-        connection: {
-          host: process.env.DB_HOST,
-          user: process.env.DB_USER,
-          password: process.env.DB_PASSWORD,
-          database: process.env.DB_NAME,
-        },
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync({
+      useFactory: async () => {
+        const options = {
+          ...(await getConnectionOptions()),
+        };
+
+        return options;
       },
     }),
+    WalletModule,
   ],
   controllers: [AppController],
   providers: [AppService],
