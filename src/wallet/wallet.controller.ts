@@ -20,7 +20,9 @@ export class WalletController {
 
   @Get('balance')
   async getBalance(@Body() getBalanceDTO: GetBalanceDto) {
-    return await this.walletService.getBalance(getBalanceDTO.walletId);
+    const balance = await this.walletService.getBalance(getBalanceDTO.walletId);
+
+    return { balance };
   }
 
   @Post('transfer')

@@ -66,7 +66,7 @@ describe('Wallet Controller', () => {
     });
 
     expect(getBalanceMock).toBeCalledTimes(1);
-    expect(balance).toEqual(dummyBalance);
+    expect(balance).toEqual({ balance: dummyBalance });
   });
 
   it('should process wallet transfer', async () => {
