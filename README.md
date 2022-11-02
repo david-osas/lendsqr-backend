@@ -5,7 +5,7 @@ This project contains code for a dummy wallet service. The wallet service functi
 You can use this link to access the postman collection documentation for this application: https://documenter.getpostman.com/view/10840074/2s83znogEi
 
 ## Deployed
-You can use this link to access the deployed application: https://osarumense-lendsqr-be-test.herokuapp.com/ 
+You can use this link to access the deployed application: https://osas-wallet-service.herokuapp.com/ 
 
 ## Local Setup
 ### Prerequisites
